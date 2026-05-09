@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ты точно моя мама?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fdf6ee;
+    --blush: #f2c4b0;
+    --rose: #c8736a;
+    --deep: #3d1f1a;
+    --warm: #8b4a42;
+    --gold: #c9a87c;
+    --soft: #f9ede4;
+    --sage: #9aab94;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Cormorant Garamond', serif;
+    background: var(--cream);
+    color: var(--deep);
+    overflow-x: hidden;
+  }
+
+  /* ─── SCREEN MANAGER ─── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; }
+
+  /* ══════════════════════════════
+     SCREEN 1 — LOCKED
+  ══════════════════════════════ */
+  #screen-lock {
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--deep);
+    overflow: hidden;
+  }
+
+  #screen-lock::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 30% 20%, rgba(200,115,106,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 80%, rgba(201,168,124,0.2) 0%, transparent 50%);
+  }
+
+  .lock-photo-bg {
+    position: absolute;
+    inset: 0;
+    background: url('mama-bg.jpg') center/cover no-repeat;
+    opacity: 0.08;
+    filter: blur(4px);
+  }
+
+  .lock-content {
+    position: relative;
+    text-align: center;
+    padding: 2rem;
+    animation: fadeUp 1.2s ease both;
+  }
+
+  .lock-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+
+  .lock-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 900;
+    color: var(--cream);
+    line-height: 1.15;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.5px;
+  }
+
+  .lock-subtitle {
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    color: var(--blush);
+    font-style: italic;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 1rem 2.8rem;
+    background: var(--rose);
+    color: var(--cream);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.15);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .btn-primary:hover::after { transform: translateX(0); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(200,115,106,0.4); }
+
+  /* ══════════════════════════════
+     SCREEN 2 — QUIZ
+  ══════════════════════════════ */
+  #screen-quiz {
+    background: var(--soft);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    min-height: 100vh;
+  }
+
+  .quiz-wrapper {
+    max-width: 600px;
+    width: 100%;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .quiz-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .quiz-progress {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .progress-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--blush);
+    transition: background 0.4s ease, transform 0.3s ease;
+  }
+  .progress-dot.done { background: var(--rose); transform: scale(1.2); }
+  .progress-dot.active { background: var(--gold); transform: scale(1.4); }
+
+  .quiz-q-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--warm);
+    margin-bottom: 0.6rem;
+  }
+
+  .quiz-question {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    color: var(--deep);
+    line-height: 1.3;
+    margin-bottom: 2rem;
+  }
+
+  .quiz-options {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .quiz-option {
+    padding: 1rem 1.5rem;
+    background: white;
+    border: 2px solid transparent;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    color: var(--deep);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+    position: relative;
+  }
+
+  .quiz-option:hover {
+    border-color: var(--blush);
+    transform: translateX(6px);
+    box-shadow: -4px 0 0 var(--rose);
+  }
+
+  .quiz-option.correct {
+    background: #d4edda;
+    border-color: var(--sage);
+    color: #2d5a27;
+    pointer-events: none;
+  }
+
+  .quiz-option.wrong {
+    background: #fde8e6;
+    border-color: var(--rose);
+    color: var(--rose);
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  .quiz-feedback {
+    margin-top: 1.5rem;
+    padding: 1.2rem 1.5rem;
+    font-style: italic;
+    font-size: 1.15rem;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    min-height: 3rem;
+  }
+
+  .quiz-feedback.show { opacity: 1; }
+  .quiz-feedback.good { color: #2d5a27; }
+  .quiz-feedback.bad { color: var(--rose); }
+
+  /* ══════════════════════════════
+     SUCCESS OVERLAY
+  ══════════════════════════════ */
+  .success-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--deep);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .success-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .success-overlay .big-heart {
+    font-size: 5rem;
+    animation: heartBeat 1.2s ease infinite;
+  }
+
+  @keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    14% { transform: scale(1.15); }
+    28% { transform: scale(1); }
+    42% { transform: scale(1.08); }
+    70% { transform: scale(1); }
+  }
+
+  .success-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.5rem, 5vw, 2.8rem);
+    color: var(--cream);
+    margin: 1.2rem 0 0.5rem;
+    line-height: 1.2;
+  }
+
+  .success-sub {
+    color: var(--blush);
+    font-size: 1.1rem;
+    font-style: italic;
+    margin-bottom: 2rem;
+  }
+
+  /* ══════════════════════════════
+     SCREEN 3 — MAIN (post-quiz)
+  ══════════════════════════════ */
+  #screen-main {
+    flex-direction: column;
+    background: var(--cream);
+    animation: fadeIn 1s ease both;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(253,246,238,0.92);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--blush);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  nav a {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--warm);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  nav a:hover { color: var(--rose); }
+
+  /* HERO */
+  .hero {
+    min-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(242,196,176,0.35) 0%, transparent 55%),
+      radial-gradient(ellipse at 80% 20%, rgba(201,168,124,0.2) 0%, transparent 45%);
+    pointer-events: none;
+  }
+
+  .hero-photo-frame {
+    width: clamp(180px, 35vw, 280px);
+    height: clamp(180px, 35vw, 280px);
+    border-radius: 50%;
+    overflow: hidden;
+    border: 6px solid var(--gold);
+    box-shadow: 0 0 0 12px rgba(201,168,124,0.15), 0 20px 60px rgba(61,31,26,0.2);
+    margin-bottom: 2.5rem;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 1s ease both;
+  }
+
+  .hero-photo-frame img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+  }
+
+  .photo-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--blush), var(--rose));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4rem;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--warm);
+    margin-bottom: 1rem;
+    animation: fadeUp 1s 0.2s ease both;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.5rem, 8vw, 5.5rem);
+    font-weight: 900;
+    color: var(--deep);
+    line-height: 1.05;
+    margin-bottom: 1.2rem;
+    animation: fadeUp 1s 0.3s ease both;
+  }
+
+  .hero-title em {
+    color: var(--rose);
+    font-style: italic;
+  }
+
+  .hero-desc {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    color: var(--warm);
+    font-style: italic;
+    font-weight: 300;
+    max-width: 500px;
+    line-height: 1.6;
+    animation: fadeUp 1s 0.45s ease both;
+  }
+
+  /* SECTION COMMON */
+  section {
+    padding: 6rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .section-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 0.8rem;
+    display: block;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 700;
+    color: var(--deep);
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+  }
+
+  /* PAINTING */
+  #painting {
+    text-align: center;
+  }
+
+  .painting-frame {
+    max-width: 500px;
+    margin: 2rem auto;
+    position: relative;
+  }
+
+  .painting-frame::before {
+    content: '';
+    position: absolute;
+    inset: -16px;
+    border: 2px solid var(--gold);
+    pointer-events: none;
+  }
+
+  .painting-frame::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border: 1px solid rgba(201,168,124,0.4);
+    pointer-events: none;
+  }
+
+  .painting-frame img {
+    width: 100%; display: block;
+    box-shadow: 0 20px 60px rgba(61,31,26,0.15);
+  }
+
+  .painting-placeholder {
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: linear-gradient(160deg, var(--blush) 0%, var(--cream) 60%, var(--gold) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .painting-placeholder span { font-size: 3rem; }
+  .painting-placeholder p {
+    font-style: italic;
+    color: var(--warm);
+    font-size: 1rem;
+    padding: 0 2rem;
+    text-align: center;
+  }
+
+  .painting-caption {
+    font-style: italic;
+    color: var(--warm);
+    font-size: 1.1rem;
+    margin-top: 2rem;
+    line-height: 1.6;
+  }
+
+  /* TIMELINE */
+  #timeline {
+    position: relative;
+  }
+
+  .timeline-line {
+    position: absolute;
+    left: 50%;
+    top: 8rem;
+    bottom: 2rem;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--blush), var(--rose), var(--blush));
+    transform: translateX(-50%);
+  }
+
+  @media (max-width: 640px) {
+    .timeline-line { left: 20px; }
+  }
+
+  .chapter {
+    margin-bottom: 5rem;
+    position: relative;
+  }
+
+  .chapter-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .chapter-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--blush);
+    line-height: 1;
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  .chapter-title-block {}
+
+  .chapter-sub {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 0.3rem;
+  }
+
+  .chapter-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-weight: 700;
+    color: var(--deep);
+  }
+
+  .chapter-text {
+    font-size: 1.15rem;
+    line-height: 1.9;
+    color: var(--warm);
+    margin-bottom: 2rem;
+    font-weight: 300;
+  }
+
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .photo-slot {
+    aspect-ratio: 4/5;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .photo-slot img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.5s ease;
+    display: block;
+  }
+
+  .photo-slot:hover img { transform: scale(1.04); }
+
+  .photo-placeholder-box {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--soft), var(--blush));
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 0.5rem;
+    font-size: 2rem;
+    color: var(--warm);
+    font-style: italic;
+    font-size: 0.85rem;
+    font-family: 'Cormorant Garamond', serif;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .photo-placeholder-box::before {
+    content: '📷';
+    font-size: 2.5rem;
+    font-style: normal;
+  }
+
+  /* AWARDS */
+  #awards {
+    background: var(--deep);
+    max-width: 100%;
+    padding: 6rem 2rem;
+  }
+
+  #awards .inner {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  #awards .section-label { color: var(--gold); }
+  #awards .section-title { color: var(--cream); }
+
+  .awards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+  }
+
+  .award-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(201,168,124,0.25);
+    padding: 2rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .award-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(200,115,106,0.15), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .award-card:hover { transform: translateY(-4px); border-color: var(--gold); }
+  .award-card:hover::before { opacity: 1; }
+
+  .award-icon { font-size: 2.5rem; margin-bottom: 0.8rem; display: block; }
+
+  .award-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cream);
+    margin-bottom: 0.4rem;
+  }
+
+  .award-desc {
+    font-size: 0.9rem;
+    color: rgba(253,246,238,0.5);
+    font-style: italic;
+  }
+
+  /* LETTERS */
+  #letters {
+    text-align: center;
+  }
+
+  .letters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin-top: 2.5rem;
+    text-align: left;
+  }
+
+  .letter-card {
+    background: white;
+    border-left: 4px solid var(--rose);
+    padding: 1.8rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .letter-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(200,115,106,0.2);
+    border-left-width: 6px;
+  }
+
+  .letter-emoji { font-size: 1.8rem; margin-bottom: 0.8rem; display: block; }
+
+  .letter-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--deep);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .letter-preview {
+    font-size: 0.9rem;
+    color: var(--warm);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  /* LETTER MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(61,31,26,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .modal-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal-box {
+    background: var(--cream);
+    max-width: 560px;
+    width: 100%;
+    padding: 3rem;
+    position: relative;
+    transform: translateY(20px);
+    transition: transform 0.4s ease;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .modal-overlay.show .modal-box { transform: translateY(0); }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem; right: 1.2rem;
+    background: none; border: none;
+    font-size: 1.5rem; cursor: pointer;
+    color: var(--warm);
+    font-family: 'Playfair Display', serif;
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--deep);
+    margin-bottom: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .modal-text {
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: var(--warm);
+    font-weight: 300;
+  }
+
+  /* FINAL */
+  #final {
+    background: var(--deep);
+    max-width: 100%;
+    padding: 8rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #final::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(200,115,106,0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 20% 100%, rgba(201,168,124,0.2) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .final-inner { position: relative; max-width: 700px; margin: 0 auto; }
+
+  .slideshow {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 3.5rem;
+    flex-wrap: wrap;
+  }
+
+  .slide-photo {
+    width: clamp(80px, 20vw, 130px);
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    transition: transform 0.4s ease;
+  }
+
+  .slide-photo:nth-child(2) { margin-top: -20px; }
+  .slide-photo:nth-child(3) { margin-top: 10px; }
+  .slide-photo:nth-child(4) { margin-top: -15px; }
+
+  .slide-photo:hover { transform: scale(1.05) rotate(-2deg); }
+
+  .slide-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .slide-placeholder {
+    width: 100%; height: 100%;
+    background: linear-gradient(160deg, var(--rose), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+  }
+
+  .final-quote {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    font-weight: 700;
+    color: var(--cream);
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  .final-sub {
+    color: var(--blush);
+    font-size: 1.1rem;
+    font-style: italic;
+    margin-bottom: 3rem;
+  }
+
+  #letter-modal { display: none; }
+  #letter-modal.show { display: flex; }
+
+  /* SCROLLREVEAL */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* DECORATIVE DIVIDER */
+  .divider {
+    text-align: center;
+    margin: 1rem 0;
+    color: var(--rose);
+    font-size: 1.3rem;
+    letter-spacing: 8px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .chapter-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .chapter-number { font-size: 2.5rem; }
+    .photo-grid { grid-template-columns: 1fr 1fr; }
+    .timeline-line { display: none; }
+    nav { gap: 1rem; }
+    nav a { font-size: 0.62rem; letter-spacing: 1px; }
+  }
+
+  /* ── Floating petals (decorative) ── */
+  .petal {
+    position: fixed;
+    pointer-events: none;
+    font-size: 1.2rem;
+    opacity: 0;
+    animation: floatPetal linear infinite;
+    z-index: 1000;
+  }
+
+  @keyframes floatPetal {
+    0% { opacity: 0; transform: translateY(-20px) rotate(0deg); }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.4; }
+    100% { opacity: 0; transform: translateY(100vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN 1: LOCK ══ -->
+<div id="screen-lock" class="screen active">
+  <div class="lock-photo-bg"></div>
+  <div class="lock-content">
+    <span class="lock-icon">🔒</span>
+    <h1 class="lock-title">Доступ<br>ограничен</h1>
+    <p class="lock-subtitle">Только моя мама может войти</p>
+    <button class="btn-primary" onclick="showScreen('quiz')">Пройти проверку</button>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: QUIZ ══ -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-wrapper">
+    <div class="quiz-header">
+      <div class="quiz-progress" id="quiz-progress"></div>
+      <p class="quiz-q-label" id="quiz-label">Вопрос 1 из 5</p>
+      <h2 class="quiz-question" id="quiz-question"></h2>
+    </div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-feedback" id="quiz-feedback"></div>
+  </div>
+</div>
+
+<!-- ══ SUCCESS OVERLAY ══ -->
+<div class="success-overlay" id="success-overlay">
+  <span class="big-heart">❤️</span>
+  <h2 class="success-text">Личность подтверждена.<br>Лучшая мама найдена.</h2>
+  <p class="success-sub">Похоже, ты действительно моя мама…</p>
+  <button class="btn-primary" onclick="enterMain()">Войти ❤️</button>
+</div>
+
+<!-- ══ LETTER MODAL ══ -->
+<div class="modal-overlay" id="letter-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="letter-emoji" id="modal-emoji" style="font-size:2.5rem;margin-bottom:1rem;display:block"></div>
+    <h3 class="modal-title" id="modal-title"></h3>
+    <p class="modal-text" id="modal-text"></p>
+  </div>
+</div>
+
+<!-- ══ SCREEN 3: MAIN ══ -->
+<div id="screen-main" class="screen" style="flex-direction:column">
+
+  <nav>
+    <a href="#hero">Главная</a>
+    <a href="#painting">Картина</a>
+    <a href="#timeline">Наша история</a>
+    <a href="#awards">Достижения</a>
+    <a href="#letters">Письма</a>
+    <a href="#final">Финал</a>
+  </nav>
+
+  <!-- HERO -->
+  <div id="hero" class="hero">
+    <div class="hero-photo-frame">
+      <!-- Replace src with real photo: <img src="mama-main.jpg" alt="Мама"> -->
+      <div class="photo-placeholder">👩</div>
+    </div>
+    <p class="hero-eyebrow">Единственная в своём роде</p>
+    <h1 class="hero-title">Мама —<br><em>единственная</em><br>в своём экземпляре</h1>
+    <p class="hero-desc">Создана из силы, любви, терпения<br>и бесконечной заботы.</p>
+  </div>
+
+  <!-- PAINTING -->
+  <section id="painting" class="reveal">
+    <span class="section-label">Как я тебя вижу</span>
+    <h2 class="section-title">Нарисованная<br>с любовью</h2>
+    <div class="divider">✦ ✦ ✦</div>
+    <div class="painting-frame">
+      <!-- Replace with: <img src="mama-painting.jpg" alt="Картина"> -->
+      <div class="painting-placeholder">
+        <span>🎨</span>
+        <p>Здесь будет твоя картина<br><em>(загрузи изображение)</em></p>
+      </div>
+    </div>
+    <p class="painting-caption">
+      «Есть моменты, которые заслуживают<br>большего, чем просто фото.»
+    </p>
+  </section>
+
+  <!-- TIMELINE -->
+  <section id="timeline" style="position:relative;max-width:900px;margin:0 auto;padding:4rem 2rem;">
+    <div class="timeline-line"></div>
+
+    <span class="section-label">Путешествие во времени</span>
+    <h2 class="section-title" style="margin-bottom:3rem">Наша история</h2>
+
+    <!-- Chapter 1 -->
+    <div class="chapter reveal">
+      <div class="chapter-header">
+        <span class="chapter-number">01</span>
+        <div class="chapter-title-block">
+          <p class="chapter-sub">Глава первая</p>
+          <h3 class="chapter-name">Начало</h3>
+        </div>
+      </div>
+      <p class="chapter-text">
+        Здесь начинается наша история. Самые ранние воспоминания — тёплые, нечёткие, как старая фотография на солнце. Запах твоих духов. Твой голос, читающий сказку на ночь. Чувство полной безопасности рядом с тобой.
+      </p>
+      <div class="photo-grid">
+        <div class="photo-slot">
+          <!-- <img src="chapter1-1.jpg" alt=""> -->
+          <div class="photo-placeholder-box">Детское фото</div>
+        </div>
+        <div class="photo-slot">
+          <div class="photo-placeholder-box">Первые годы</div>
+        </div>
+        <div class="photo-slot">
+          <div class="photo-placeholder-box">Семья</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chapter 2 -->
+    <div class="chapter reveal">
+      <div class="chapter-header">
+        <span class="chapter-number">02</span>
+        <div class="chapter-title-block">
+          <p class="chapter-sub">Глава вторая</p>
+          <h3 class="chapter-name">Мы росли вместе</h3>
+        </div>
+      </div>
+      <p class="chapter-text">
+        Школа, праздники, поездки — всё это было с тобой. Смешные моменты, которые мы до сих пор вспоминаем и смеёмся. Ты была рядом в самые важные дни, и именно это я помню больше всего.
+      </p>
+      <div class="photo-grid">
+        <div class="photo-slot">
+          <div class="photo-placeholder-box">Праздники</div>
+        </div>
+        <div class="photo-slot">
+          <div class="photo-placeholder-box">Поездки</div>
+        </div>
+        <div class="photo-slot">
+          <div class="photo-placeholder-box">Вместе</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chapter 3 -->
+    <div class="chapter reveal">
+      <div class="chapter-header">
+        <span class="chapter-number">03</span>
+        <div class="chapter-title-block">
+          <p class="chapter-sub">Глава третья</p>
+          <h3 class="chapter-name">За что я тебе благодарна</h3>
+        </div>
+      </div>
+      <p class="chapter-text">
+        Я выросла — и только сейчас начинаю понимать, сколько всего ты делала и делаешь. Как много в себе несёшь. Как умеешь поддержать одним словом или объятием. Спасибо, что научила меня быть сильной — своим примером.
+      </p>
+      <div class="photo-grid">
+        <div class="photo-slot">
+          <div class="photo-placeholder-box">Взрослые годы</div>
+        </div>
+        <div class="photo-slot">
+          <div class="photo-placeholder-box">Уроки жизни</div>
+        </div>
+        <div class="photo-slot">
+          <div class="photo-placeholder-box">Наши моменты</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AWARDS -->
+  <div id="awards">
+    <div class="inner">
+      <span class="section-label">Заслуженно и официально</span>
+      <h2 class="section-title">Мамины достижения</h2>
+      <div class="awards-grid">
+        <div class="award-card reveal">
+          <span class="award-icon">🏆</span>
+          <p class="award-title">Генеральный директор семьи</p>
+          <p class="award-desc">Без выходных, без отпуска, без права на ошибку. Справляется блестяще.</p>
+        </div>
+        <div class="award-card reveal">
+          <span class="award-icon">👨‍🍳</span>
+          <p class="award-title">Лучший повар в мире</p>
+          <p class="award-desc">Ни один ресторан не сравнится с твоей кухней.</p>
+        </div>
+        <div class="award-card reveal">
+          <span class="award-icon">🧩</span>
+          <p class="award-title">Чемпион по решению проблем</p>
+          <p class="award-desc">Находит выход там, где его, кажется, нет вообще.</p>
+        </div>
+        <div class="award-card reveal">
+          <span class="award-icon">🤗</span>
+          <p class="award-title">Самые тёплые объятия</p>
+          <p class="award-desc">Мировой рекорд по силе и качеству. Официально.</p>
+        </div>
+        <div class="award-card reveal">
+          <span class="award-icon">💪</span>
+          <p class="award-title">Самый сильный человек</p>
+          <p class="award-desc">Не в спортзале — в жизни. Это сложнее.</p>
+        </div>
+        <div class="award-card reveal">
+          <span class="award-icon">⭐</span>
+          <p class="award-title">Звезда моей жизни</p>
+          <p class="award-desc">По ней сверяю курс. Всегда.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LETTERS -->
+  <section id="letters" class="reveal">
+    <span class="section-label">Только для тебя</span>
+    <h2 class="section-title">Открыть, когда…</h2>
+    <div class="letters-grid">
+      <div class="letter-card" onclick="openLetter(0)">
+        <span class="letter-emoji">💌</span>
+        <p class="letter-title">Открыть, когда тебе грустно</p>
+        <p class="letter-preview">Напоминание о том, что ты не одна…</p>
+      </div>
+      <div class="letter-card" onclick="openLetter(1)">
+        <span class="letter-emoji">🌸</span>
+        <p class="letter-title">Открыть, когда скучаешь по мне</p>
+        <p class="letter-preview">Я здесь. Всегда рядом, даже если далеко…</p>
+      </div>
+      <div class="letter-card" onclick="openLetter(2)">
+        <span class="letter-emoji">✨</span>
+        <p class="letter-title">Открыть, когда нужен совет</p>
+        <p class="letter-preview">Всё, чему ты меня научила, живёт во мне…</p>
+      </div>
+      <div class="letter-card" onclick="openLetter(3)">
+        <span class="letter-emoji">😄</span>
+        <p class="letter-title">Открыть, когда хочется улыбнуться</p>
+        <p class="letter-preview">Несколько вещей, которые только мы понимаем…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <div id="final">
+    <div class="final-inner">
+      <div class="slideshow">
+        <div class="slide-photo">
+          <!-- <img src="slide1.jpg" alt=""> -->
+          <div class="slide-placeholder">🌸</div>
+        </div>
+        <div class="slide-photo">
+          <div class="slide-placeholder">💛</div>
+        </div>
+        <div class="slide-photo">
+          <div class="slide-placeholder">🌺</div>
+        </div>
+        <div class="slide-photo">
+          <div class="slide-placeholder">✨</div>
+        </div>
+      </div>
+      <p class="final-quote">«Всё лучшее во мне<br>началось с тебя.»</p>
+      <p class="final-sub">С любовью — всегда и навсегда</p>
+      <button class="btn-primary" onclick="openLastLetter()" style="background:var(--rose)">
+        Открыть последнее письмо 💌
+      </button>
+    </div>
+  </div>
+
+</div><!-- /screen-main -->
+
+<script>
+// ── QUIZ DATA ──────────────────────────────────────────────
+// ✏️  CUSTOMIZE: edit questions, options, and correct answer index
+const QUESTIONS = [
+  {
+    q: "Какое блюдо я чаще всего просила приготовить?",
+    options: ["Пельмени", "Оливье", "Блины", "Борщ"],
+    correct: 2,  // ← индекс правильного ответа (0 = первый)
+    feedback: "Да, блинчики — это целый ритуал! 🥞"
+  },
+  {
+    q: "Как меня называли дома в детстве?",
+    options: ["Котёнок", "Солнышко", "Малышка", "Принцесса"],
+    correct: 1,
+    feedback: "Солнышко — именно так. И ты это не забыла ☀️"
+  },
+  {
+    q: "Чего я боялась маленькой?",
+    options: ["Пауков", "Темноты", "Собак", "Грозы"],
+    correct: 1,
+    feedback: "Ты всегда приходила и держала за руку 🤍"
+  },
+  {
+    q: "О чём я мечтала в детстве?",
+    options: ["Стать балериной", "Стать врачом", "Путешествовать", "Завести лошадь"],
+    correct: 2,
+    feedback: "Мечты меняются, но ты всегда их поддерживала 🌍"
+  },
+  {
+    q: "Что мы всегда делали вместе в воскресенье?",
+    options: ["Смотрели кино", "Готовили вместе", "Ходили гулять", "Читали книги"],
+    correct: 1,
+    feedback: "Эти воскресенья — одни из лучших воспоминаний 💛"
+  }
+];
+
+const LETTERS = [
+  {
+    emoji: "💌",
+    title: "Когда тебе грустно",
+    text: "Мамочка, если ты это читаешь — значит, тебе сейчас не очень. Хочу, чтобы ты знала: всё, что ты чувствуешь — правильно. Ты имеешь право быть уставшей, растерянной, грустной. Но помни — рядом всегда есть я. Позвони мне. Или просто знай, что где бы я ни была, я думаю о тебе каждый день. Ты самый важный человек в моей жизни. И это никогда не изменится. ❤️"
+  },
+  {
+    emoji: "🌸",
+    title: "Когда скучаешь по мне",
+    text: "Я здесь. Всегда рядом — даже если нас разделяют километры. Знаешь, я часто думаю о маленьких вещах: как ты смеёшься, как поправляешь волосы, как говоришь «ну ладно уж» когда соглашаешься. Расстояние не делает меня дальше от тебя. Ты у меня в сердце, и это буквально. Напиши мне — прямо сейчас. Я жду. 💕"
+  },
+  {
+    emoji: "✨",
+    title: "Когда нужен совет",
+    text: "Знаешь, откуда у меня все самые мудрые решения в жизни? От тебя. Всё, чему ты меня учила — терпению, честности, умению держаться, — это живёт внутри меня. Когда я не знаю, что делать, я спрашиваю себя: «А что бы сделала мама?» И ответ почти всегда помогает. Так что совет у тебя уже есть — ты сама его дала мне давным-давно. 🤍"
+  },
+  {
+    emoji: "😄",
+    title: "Когда хочется улыбнуться",
+    text: "Вот список вещей, которые понимаем только мы двое:\n\n— Тот особый звук, когда ты говоришь «м-м-м» в знак несогласия 😂\n— Наш фирменный взгляд «мы об этом поговорим позже»\n— Как мы обе делаем вид, что не хотим последний кусочек торта — и обе хотим\n— Наш смех, который начинается тихо и заканчивается со слезами\n\nМы с тобой — отдельный маленький мир. И я очень рада, что он у нас есть. 💛"
+  },
+  {
+    emoji: "💐",
+    title: "Последнее письмо",
+    text: "Мамочка.\n\nЯ написала этот сайт, потому что слова «спасибо» и «я тебя люблю» кажутся мне слишком маленькими для того, что ты для меня значишь. Хотелось сделать что-то, что ты сможешь открыть и почувствовать — всё то, что я не всегда умею выразить вслух.\n\nТы — мой первый дом. Моя точка опоры. Мой образец.\n\nВсё лучшее во мне — от тебя.\n\nС любовью, которой нет конца,\nтвоя дочь ❤️"
+  }
+];
+
+// ── QUIZ LOGIC ─────────────────────────────────────────────
+let currentQ = 0;
+let correctCount = 0;
+let answered = false;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  if (id === 'quiz') initQuiz();
+}
+
+function initQuiz() {
+  buildProgressDots();
+  renderQuestion();
+}
+
+function buildProgressDots() {
+  const c = document.getElementById('quiz-progress');
+  c.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'progress-dot' + (i === 0 ? ' active' : '');
+    c.appendChild(d);
+  });
+}
+
+function updateDots() {
+  const dots = document.querySelectorAll('.progress-dot');
+  dots.forEach((d, i) => {
+    d.className = 'progress-dot';
+    if (i < currentQ) d.classList.add('done');
+    if (i === currentQ) d.classList.add('active');
+  });
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  document.getElementById('quiz-label').textContent = `Вопрос ${currentQ + 1} из ${QUESTIONS.length}`;
+  document.getElementById('quiz-question').textContent = q.q;
+  document.getElementById('quiz-feedback').className = 'quiz-feedback';
+  document.getElementById('quiz-feedback').textContent = '';
+  answered = false;
+
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = opt;
+    btn.onclick = () => answerQ(i);
+    opts.appendChild(btn);
+  });
+
+  updateDots();
+}
+
+function answerQ(i) {
+  if (answered) return;
+  answered = true;
+
+  const q = QUESTIONS[currentQ];
+  const opts = document.querySelectorAll('.quiz-option');
+  const fb = document.getElementById('quiz-feedback');
+
+  opts.forEach((o, idx) => {
+    if (idx === q.correct) o.classList.add('correct');
+    else if (idx === i) o.classList.add('wrong');
+  });
+
+  if (i === q.correct) {
+    correctCount++;
+    fb.textContent = q.feedback;
+    fb.className = 'quiz-feedback show good';
+  } else {
+    fb.textContent = 'Не совсем… но мама точно знает правильный ответ 🤍';
+    fb.className = 'quiz-feedback show bad';
+  }
+
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < QUESTIONS.length) {
+      renderQuestion();
+    } else {
+      showSuccess();
+    }
+  }, 1800);
+}
+
+function showSuccess() {
+  const overlay = document.getElementById('success-overlay');
+  overlay.classList.add('show');
+}
+
+function enterMain() {
+  document.getElementById('success-overlay').classList.remove('show');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-main').classList.add('active');
+  window.scrollTo(0, 0);
+  initScrollReveal();
+  spawnPetals();
+}
+
+// ── SCROLL REVEAL ──────────────────────────────────────────
+function initScrollReveal() {
+  const els = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(el => obs.observe(el));
+}
+
+// ── LETTERS ────────────────────────────────────────────────
+function openLetter(i) {
+  const l = LETTERS[i];
+  document.getElementById('modal-emoji').textContent = l.emoji;
+  document.getElementById('modal-title').textContent = l.title;
+  document.getElementById('modal-text').innerHTML = l.text.replace(/\n/g, '<br>');
+  const m = document.getElementById('letter-modal');
+  m.style.display = 'flex';
+  setTimeout(() => m.classList.add('show'), 10);
+}
+
+function openLastLetter() { openLetter(4); }
+
+function closeModal() {
+  const m = document.getElementById('letter-modal');
+  m.classList.remove('show');
+  setTimeout(() => m.style.display = 'none', 400);
+}
+
+document.getElementById('letter-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── PETALS ─────────────────────────────────────────────────
+function spawnPetals() {
+  const symbols = ['🌸', '✨', '💕', '🌺', '💛'];
+  for (let i = 0; i < 12; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'petal';
+      p.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.animationDuration = (4 + Math.random() * 5) + 's';
+      p.style.animationDelay = (Math.random() * 3) + 's';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 10000);
+    }, i * 200);
+  }
+}
+</script>
+</body>
+</html>
